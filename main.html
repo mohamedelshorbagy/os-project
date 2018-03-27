@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Document</title>
+    <link rel="stylesheet" href="bootstrap-cosmo.min.css">
+    <link rel="stylesheet" href="main.css">
+</head>
+
+<body>
+
+
+
+
+    <div id="app" class="container-fluid">
+        <div class="container">
+            <div class="row">
+                <div class="col-xs-8 col-xs-offset-2">
+                    <select id="method" class="form-control"></select>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-xs-12">
+                <div class="row">
+                    <form class="form-group" onsubmit="event.preventDefault(); addItem(); draw();">
+                        <div class="col-xs-2 col-xs-offset-1">
+                            <input type="text" id="item-id" class="form-control" placeholder="ID" />
+                        </div>
+                        <div class="col-xs-2">
+                            <input type="text" id="item-name" class="form-control" placeholder="Task Name" />
+                        </div>
+                        <div class="col-xs-2">
+                            <input type="text" id="item-arrival" class="form-control" placeholder="Arrival" />
+                        </div>
+                        <div class="col-xs-2">
+                            <input type="text" id="item-burst" class="form-control" placeholder="Burst" />
+                        </div>
+                        <div class="col-xs-2">
+                            <input type="text" id="item-par" class="form-control" placeholder="Pariority" />
+                        </div>
+                        <button class="btn btn-success" type="submit">Add Item</button>
+                    </form>
+                </div>
+
+                <button onclick="getItemsData()" class="btn btn-default">Get Items</button>
+                <table class="table table-striped table-bordered table-hover">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Name</th>
+                            <th>Arrival</th>
+                            <th>Burst</th>
+                            <th>Pariority</th>
+                        </tr>
+                    </thead>
+                    <tbody id="items">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Print Gantt Chart -->
+        <div class="responsive">
+            <table class="table table-hover table-bordered">
+                <tbody>
+                    <tr id="gantt"></tr>
+                </tbody>
+            </table>
+            <table class="table table-hover" id="gantt__table">
+                <tbody>
+                    <tr id="gantt__scale"></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+
+    <script>
+
+        var items = []; // Memory of the Application
+        var counter = 0; // Counter
+        initSelectMethod();
+
+        // Get Select Box
+        var select = document.getElementById('method');
+        // var defaultValue = select.value;
+        select.addEventListener('change', function (e) {
+            draw();
+        });
+
+        draw();
+
+        function initSelectMethod() {
+            var select = document.getElementById('method');
+            var methods = [
+                { value: "FCFS", name: "FCFS" },
+                { value: "SJFNP", name: "SJF Non-Preemptive" },
+                { value: "SJFP", name: "SJF Preemptive" },
+                { value: "PNP", name: "Priority Non-Preemptive" },
+                { value: "PP", name: "Priority Preemptive" },
+                { value: "RR", name: "Round Robin" },
+            ];
+            let methodOption = '';
+            for (let method of methods) {
+                methodOption += `<option value='${method['value']}'>${method['name']}</options>`;
+            }
+            select.innerHTML += methodOption;
+            select.value = methods[0].value;
+        }
+
+
+        function draw() {
+            console.log(select.value);
+            if (select.value === 'FCFS') {
+                items.sort(sortArrayBy('arrival'));
+                let start = 0;
+                items.forEach((item, i) => {
+                    item.start = start;
+                    start += Number(item['burst']);
+                });
+            } else if (select.value === 'SJFP') {
+                items.sort(sortArrayBy('arrival'));
+            } else if (select.value === 'SJFNP') {
+
+            }
+            printItems();
+            printGanttChart();
+
+
+        }
+
+
+        function sortArray(a, b, prop) {
+
+        }
+
+        function sortArrayBy(prop) {
+            return function (a, b) {
+                return Number(a[prop]) > Number(b[prop]);
+            }
+        }
+
+        function sortRR(a, b) {
+            return a.arrival > b.arrival;
+        }
+
+        function FCFS(a, b) {
+            return a.arrival > b.arrival;
+        }
+
+        function SJF(a, b) {
+
+        }
+
+        function sortItems(method) {
+            if (method === 'rr') {
+                items.sort(sortRR);
+            }
+        }
+
+        function printNewItem() {
+            var list = document.getElementById("items");
+            for (let i = counter - 1; i < items.length; i++) {
+                let singleList = '<tr>';
+                let itemData = items[i];
+                for (key in itemData) {
+                    singleList += `<td>${itemData[key]}</td>`
+                }
+                singleList += '</tr>';
+                list.innerHTML += singleList;
+            }
+
+        }
+
+        function printItems() {
+            var list = document.getElementById("items");
+            list.innerHTML = '';
+            for (let i = 0; i < items.length; i++) {
+                let singleList = '<tr>';
+                let itemData = items[i];
+                for (key in itemData) {
+                    if (key !== 'start') {
+                        singleList += `<td>${itemData[key]}</td>`
+                    }
+                }
+                singleList += '</tr>';
+                list.innerHTML += singleList;
+            }
+        }
+
+
+        function printGanttChart() {
+            var gantt = document.getElementById('gantt');
+            var gantt_scale = document.getElementById('gantt__scale');
+            let step = '';
+            let stepNumbers = '';
+            let allBurstTime = 0;
+            items.forEach((item, i) => {
+                allBurstTime += Number(item['burst']);
+                let widthNumber = Number(item['burst']) * 5;
+                step += `<td style="width:${widthNumber}px" class="text-center">${item['name']}</td>`;
+                if (i === 0) {
+                    stepNumbers += `<td style="width:${widthNumber}px">
+                    <span class="pull-left">0</span>
+                    <span class="pull-right">${Number(item['burst'])}</span>
+                    </td>
+                    `;
+                } else {
+                    stepNumbers += `<td style="width:${widthNumber}px">
+                    <span class="pull-right">${allBurstTime}</span>
+                    </td>
+                    `;
+                }
+            });
+            gantt.innerHTML = step;
+            gantt_scale.innerHTML = stepNumbers;
+
+
+
+        }
+
+        function addItem() {
+            var inputId = document.getElementById("item-id");
+            var inputName = document.getElementById("item-name");
+            var inputArrival = document.getElementById("item-arrival");
+            var inputBurst = document.getElementById("item-burst");
+            var inputPariority = document.getElementById("item-par");
+            var itemData = {
+                id: inputId.value,
+                name: inputName.value,
+                arrival: inputArrival.value,
+                burst: inputBurst.value,
+                pariority: inputPariority.value
+            };
+
+            counter++;
+            items.push(itemData);
+            printNewItem();
+        }
+
+        function getItemsData() {
+            items.sort(sortArrayBy('id'));
+            printItems();
+        }
+
+    </script>
+
+</body>
+
+</html>

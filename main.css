@@ -1,0 +1,30 @@
+.form-control {
+    margin-bottom: 15px;
+}
+
+
+.btn {
+    margin-bottom: 15px;
+    margin-left:50%;
+    transform: translateX(-50%);
+}
+
+
+.table thead {
+    background-color: #222;
+    color: #FFF;
+}
+
+
+#gantt__table {
+    margin-top: -25px;
+}
+
+.table.table-hover tbody tr td {
+    height: 10px;
+}
+
+.table>tbody>tr#gantt__scale>td {
+    border: none !important;
+    border-top: none !important;
+}
