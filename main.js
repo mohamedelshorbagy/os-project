@@ -20,6 +20,13 @@ const mainMenuTemplate = [
     },
     {
         label: 'Tools',
+        submenu: [{
+            label: 'Open Dev Tools',
+            accelerator: process.platform === 'darwin' ? 'Command+Shift+I' : 'Ctrl+Shift+I',
+            click() {
+                win.webContents.openDevTools();
+            }
+        }]
     }, {
         label: 'Options'
     }

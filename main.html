@@ -201,13 +201,13 @@
                 allBurstTime += Number(item['burst']);
                 let widthNumber = Number(item['burst']) * 5;
                 step += `<td style="width:${widthNumber}px" class="text-center">${item['name']}</td>`;
-                if (i === 0) {
+                if (i === 0) { // First Cell
                     stepNumbers += `<td style="width:${widthNumber}px">
                     <span class="pull-left">0</span>
                     <span class="pull-right">${Number(item['burst'])}</span>
                     </td>
                     `;
-                } else {
+                } else { // Other Cells
                     stepNumbers += `<td style="width:${widthNumber}px">
                     <span class="pull-right">${allBurstTime}</span>
                     </td>
