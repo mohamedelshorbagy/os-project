@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Document</title>
-    <link rel="stylesheet" href="bootstrap-cosmo.min.css">
+    <link rel="stylesheet" href="bootstrap-cosmo.min.css?v0.1">
     <link rel="stylesheet" href="main.css">
 </head>
 
@@ -24,9 +24,9 @@
         </div>
         <div class="row">
             <div class="col-xs-12">
-                <div class="row">
-                    <form class="form-group" onsubmit="event.preventDefault(); addItem(); draw();">
-                        <div class="col-xs-2 col-xs-offset-1">
+                <form class="form-group" onsubmit="event.preventDefault(); addItem(); draw();">
+                    <div class="row">
+                        <div class="col-xs-2">
                             <input type="text" id="item-id" class="form-control" placeholder="ID" />
                         </div>
                         <div class="col-xs-2">
@@ -41,11 +41,14 @@
                         <div class="col-xs-2">
                             <input type="text" id="item-par" class="form-control" placeholder="Pariority" />
                         </div>
-                        <button class="btn btn-success" type="submit">Add Item</button>
-                    </form>
-                </div>
+                        <div class="col-xs-2">
+                            <input type="text" id="item-quantum" class="form-control" placeholder="Quantum" />
+                        </div>
+                    </div>
+                    <button class="btn btn-success btn-block" type="submit">Add Item</button>
+                </form>
+                <button class="btn btn-danger" onclick="clearMemory()">Clear</button>
 
-                <button onclick="getItemsData()" class="btn btn-default">Get Items</button>
                 <table class="table table-striped table-bordered table-hover">
                     <thead>
                         <tr>
@@ -54,6 +57,7 @@
                             <th>Arrival</th>
                             <th>Burst</th>
                             <th>Pariority</th>
+                            <th>Quantum</th>
                         </tr>
                     </thead>
                     <tbody id="items">
@@ -64,8 +68,8 @@
 
         <!-- Print Gantt Chart -->
         <div class="responsive">
+            <tbody>
             <table class="table table-hover table-bordered">
-                <tbody>
                     <tr id="gantt"></tr>
                 </tbody>
             </table>
@@ -82,16 +86,46 @@
 
         var items = []; // Memory of the Application
         var counter = 0; // Counter
+        var turnAroundTimeArray = [];
+        var avgTimeArray = [];
+        var turnAroundTime = 0;
+        var avgWaitingTime = 0;
         initSelectMethod();
 
         // Get Select Box
         var select = document.getElementById('method');
-        // var defaultValue = select.value;
         select.addEventListener('change', function (e) {
             draw();
         });
 
         draw();
+
+        function clearTables() {
+            let list = document.getElementById('items');
+            let ganttChart = document.getElementById('gantt');
+            let ganttScale = document.getElementById('gantt__scale');
+            var inputId = document.getElementById("item-id");
+            var inputName = document.getElementById("item-name");
+            var inputArrival = document.getElementById("item-arrival");
+            var inputBurst = document.getElementById("item-burst");
+            var inputPariority = document.getElementById("item-par");
+            var inputQuantum = document.getElementById("item-quantum");
+            inputId.value = '';
+            inputName.value = '';
+            inputArrival.value = '';
+            inputBurst.value = '';
+            inputPariority.value = '';
+            inputQuantum.value = '';
+            list.innerHTML = '';
+            ganttChart.innerHTML = '';
+            ganttScale.innerHTML = '';
+        }
+        function clearMemory() {
+            items = [];
+            clearTables();
+            counter = 0;
+        }
+
 
         function initSelectMethod() {
             var select = document.getElementById('method');
@@ -113,29 +147,33 @@
 
 
         function draw() {
-            console.log(select.value);
+            let quant = document.getElementById('item-quantum').value;
             if (select.value === 'FCFS') {
                 items.sort(sortArrayBy('arrival'));
-                let start = 0;
-                items.forEach((item, i) => {
-                    item.start = start;
-                    start += Number(item['burst']);
-                });
+                printItems();
+                printGanttChart();
             } else if (select.value === 'SJFP') {
-                items.sort(sortArrayBy('arrival'));
+
             } else if (select.value === 'SJFNP') {
+                // TODO: More Test Cases
+                items.sort(sortArrayBy('burst'));
+                printItems();
+                printGanttChart();
+            } else if (select.value === 'RR') {
+                // Robin Round Algorithm
+                drawRobinRound(Number(quant));
+
+            } else if (select.value === 'PNP') {
+                items.sort(sortArrayBy('pariority'));
+                printItems();
+                printGanttChart();
+            } else if (select.value === 'PP') {
 
             }
-            printItems();
-            printGanttChart();
 
 
         }
 
-
-        function sortArray(a, b, prop) {
-
-        }
 
         function sortArrayBy(prop) {
             return function (a, b) {
@@ -144,21 +182,75 @@
         }
 
         function sortRR(a, b) {
-            return a.arrival > b.arrival;
-        }
+            // Round Robin Algorithm 
 
-        function FCFS(a, b) {
-            return a.arrival > b.arrival;
         }
-
         function SJF(a, b) {
 
         }
 
-        function sortItems(method) {
-            if (method === 'rr') {
-                items.sort(sortRR);
+        function drawRobinRound(quantum) {
+            var gantt = document.getElementById('gantt');
+            var gantt_scale = document.getElementById('gantt__scale');
+            gantt.innerHTML = '';
+            gantt_scale.innerHTML = '';
+            let step = '';
+            let stepNumbers = '';
+            let allBurstTime = 0;
+            let robinRoundArray = JSON.parse(JSON.stringify(items)); // Deep Copying Of Array Of Objects
+            let done = true;
+            let tracker = false;
+            while (1) {
+                done = true;
+                for (let i = 0; i < robinRoundArray.length; i++) {
+                    if (robinRoundArray[i]['burst'] > 0) {
+                        done = false;
+                        if (robinRoundArray[i]['burst'] > quantum) {
+                            robinRoundArray[i]['burst'] = Number(robinRoundArray[i]['burst']) - quantum;
+                            allBurstTime += quantum;
+                            let widthNumber = quantum * 5;
+                            step += `<td style="width:${widthNumber}px" class="text-center">${robinRoundArray[i]['name']}</td>`;
+                            if (i === 0 && tracker === false) { // First Cell
+                                tracker = true;
+                                stepNumbers += `<td style="width:${widthNumber}px">
+                                    <span class="pull-left">0</span>
+                                    <span class="pull-right">${allBurstTime}</span>
+                                    </td>
+                                    `;
+                            } else { // Other Cells
+                                stepNumbers += `<td style="width:${widthNumber}px">
+                                        <span class="pull-right">${allBurstTime}</span>
+                                        </td>
+                                        `;
+                            }
+                        } else {
+                            allBurstTime += Number(robinRoundArray[i]['burst']);
+                            let widthNumber = Number(robinRoundArray[i]['burst']) * 5;
+                            robinRoundArray[i]['burst'] = 0;
+                            step += `<td style="width:${widthNumber}px" class="text-center">${robinRoundArray[i]['name']}</td>`;
+                            if (i === 0 && tracker === false) { // First Cell
+                                tracker = true;
+                                stepNumbers += `<td style="width:${widthNumber}px">
+                                    <span class="pull-left">0</span>
+                                    <span class="pull-right">${Number(robinRoundArray[i]['burst'])}</span>
+                                    </td>
+                                    `;
+                            } else { // Other Cells
+                                stepNumbers += `<td style="width:${widthNumber}px">
+                                            <span class="pull-right">${allBurstTime}</span>
+                                            </td>
+                                            `;
+                            }
+                        }
+                    }
+                }
+                if (done === true) {
+                    break;
+                }
+
             }
+            gantt.innerHTML = step;
+            gantt_scale.innerHTML = stepNumbers;
         }
 
         function printNewItem() {
@@ -172,7 +264,6 @@
                 singleList += '</tr>';
                 list.innerHTML += singleList;
             }
-
         }
 
         function printItems() {
@@ -182,9 +273,7 @@
                 let singleList = '<tr>';
                 let itemData = items[i];
                 for (key in itemData) {
-                    if (key !== 'start') {
-                        singleList += `<td>${itemData[key]}</td>`
-                    }
+                    singleList += `<td>${itemData[key]}</td>`
                 }
                 singleList += '</tr>';
                 list.innerHTML += singleList;
@@ -192,6 +281,7 @@
         }
 
 
+        // Gantt Chart Draw Function
         function printGanttChart() {
             var gantt = document.getElementById('gantt');
             var gantt_scale = document.getElementById('gantt__scale');
@@ -222,28 +312,30 @@
 
         }
 
+        /*
+            [ Function Name ] : addItems()
+            [ Functionality ] : Add Items By the Inputs From User
+            [ Used Fucntions ] : JavaScript DOM Elemenets ==> Catch By ID  
+        */
         function addItem() {
             var inputId = document.getElementById("item-id");
             var inputName = document.getElementById("item-name");
             var inputArrival = document.getElementById("item-arrival");
             var inputBurst = document.getElementById("item-burst");
             var inputPariority = document.getElementById("item-par");
+            var inputQuantum = document.getElementById("item-quantum");
             var itemData = {
                 id: inputId.value,
                 name: inputName.value,
                 arrival: inputArrival.value,
                 burst: inputBurst.value,
-                pariority: inputPariority.value
+                pariority: inputPariority.value,
+                quantum: inputQuantum.value
             };
 
             counter++;
             items.push(itemData);
             printNewItem();
-        }
-
-        function getItemsData() {
-            items.sort(sortArrayBy('id'));
-            printItems();
         }
 
     </script>
