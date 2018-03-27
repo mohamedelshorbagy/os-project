@@ -49,6 +49,18 @@
                 </form>
                 <button class="btn btn-danger" onclick="clearMemory()">Clear</button>
 
+                <!-- Print Turn Arround Time and Average Time -->
+                <div class="row print">
+                    <div class="col-xs-6">
+                        Turn Arround Time :
+                        <span id="ta"></span>
+                    </div>
+                    <div class="col-xs-6">
+                        Waiting Time :
+                        <span id="wt"></span>
+                    </div>
+                </div>
+
                 <table class="table table-striped table-bordered table-hover">
                     <thead>
                         <tr>
@@ -86,10 +98,6 @@
 
         var items = []; // Memory of the Application
         var counter = 0; // Counter
-        var turnAroundTimeArray = [];
-        var avgTimeArray = [];
-        var turnAroundTime = 0;
-        var avgWaitingTime = 0;
         initSelectMethod();
 
         // Get Select Box
@@ -99,6 +107,15 @@
         });
 
         draw();
+
+        function printTiming(wt, ta) {
+            let taElement = document.getElementById('ta');
+            let wtElement = document.getElementById('wt');
+
+            taElement.innerHTML = `<strong>${ta}</strong>`;
+            wtElement.innerHTML = `<strong>${wt}</strong>`;
+
+        }
 
         function clearTables() {
             let list = document.getElementById('items');
@@ -154,7 +171,8 @@
                 printGanttChart();
             } else if (select.value === 'SJFP') {
                 SJFPreemptive();
-
+                printItems();
+                printGanttChart();
             } else if (select.value === 'SJFNP') {
                 // TODO: More Test Cases
                 items.sort(sortArrayBy('burst'));
@@ -194,7 +212,7 @@
                         arr[j + 1] = tmp; //Replace adjacent number with current number
                     }
                 }
-                
+
             }
 
             return arr;
@@ -202,99 +220,60 @@
 
 
         function SJFPreemptive() {
-            // let itemsTest = [{
-            //     id: 1,
-            //     arrival: 0,
-            //     burst: 8,
-            //     burstA: 8
-            // }, {
-            //     id: 2,
-            //     arrival: 1,
-            //     burst: 6,
-            //     burstA: 6
-            // }, {
-            //     id: 3,
-            //     arrival: 2,
-            //     burst: 4,
-            //     burstA: 4
-            // }, {
-            //     id: 4,
-            //     arrival: 3,
-            //     burst: 3,
-            //     burstA: 3
-            // }, {
-            //     id: 5,
-            //     arrival: 4,
-            //     burst: 1,
-            //     burstA: 1
-            // }];
-            let itemsTest = [{
-                id: 1,
-                arrival: 1,
-                burst: 6,
-                burstA: 6
-            }, {
-                id: 2,
-                arrival: 1,
-                burst: 8,
-                burstA: 8
-            }, {
-                id: 3,
-                arrival: 2,
-                burst: 7,
-                burstA: 7
-            }, {
-                id: 4,
-                arrival: 3,
-                burst: 3,
-                burstA: 3
-            }];
             let pcom = 0, count = 0;
-            let itemLength = itemsTest.length;
-            let sjfArray = JSON.parse(JSON.stringify(itemsTest));
+            let itemLength = items.length;
+            let sjfArray = JSON.parse(JSON.stringify(items));
             sjfArray.sort(sortArrayBy('arrival'));
             let turnArroundTime = 0;
             let waitingTime = 0;
             while (pcom < itemLength) {
                 for (i = 0; i < itemLength; i++) {
-                    if (sjfArray[i]['arrival'] > count) {
+                    if (Number(sjfArray[i]['arrival']) > count) {
                         break;
                     }
                 }
-                sjfArray = bubbleSort(sjfArray , i , 'burst');
+                sjfArray = bubbleSort(sjfArray, i, 'burst');
                 if (i > 0) {
                     for (i = 0; i < itemLength; i++) {
-                        if (sjfArray[i]['burst'] != 0) {
+                        if (Number(sjfArray[i]['burst']) != 0) {
                             break;
                         }
                     }
-                    if (sjfArray[i]['arrival'] > count) {
-                        count = sjfArray[i]['arrival'];
+                    if (Number(sjfArray[i]['arrival']) > count) {
+                        count = Number(sjfArray[i]['arrival']);
                     }
                     sjfArray[i]['complete'] = count + 1;
-                    sjfArray[i]['burst'] = sjfArray[i]['burst'] - 1;
+                    sjfArray[i]['burst'] = Number(sjfArray[i]['burst']) - 1;
                 }
                 count++;
                 pcom = 0;
                 for (i = 0; i < itemLength; i++) {
-                    if (sjfArray[i]['burst'] == 0) {
+                    if (Number(sjfArray[i]['burst']) == 0) {
                         pcom++;
                     }
                 }
 
-            }
 
+            }
             for (let j = 0; j < itemLength; j++) {
-                sjfArray[j]['turn'] = sjfArray[j]['complete'] - sjfArray[j]['arrival'];
-                turnAroundTime += sjfArray[j]['turn'];
-                sjfArray[j]['waiting'] = sjfArray[j]['turn'] - sjfArray[j]['burstA'];
-                waitingTime += sjfArray[j]['waiting'];
+                sjfArray[j]['turn'] = Number(sjfArray[j]['complete']) - Number(sjfArray[j]['arrival']);
+                turnArroundTime += sjfArray[j]['turn'];
+                sjfArray[j]['waiting'] = Number(sjfArray[j]['turn']) - Number(sjfArray[j]['burstA']);
+                waitingTime += Number(sjfArray[j]['waiting']);
             }
 
-            turnAroundTime = turnAroundTime / itemLength;
-            waitingTime = waitingTime / itemLength;
+            if (itemLength !== 0) {
+                turnArroundTime = turnArroundTime / itemLength;
+                waitingTime = waitingTime / itemLength;
+                printTiming(waitingTime, turnArroundTime);
+            }
+
             console.log(sjfArray);
-            console.log('TR', turnAroundTime, 'WT', waitingTime);
+        }
+
+
+        function drawSJFPreemptive(arr) {
+
         }
 
         function drawRobinRound(quantum) {
@@ -383,7 +362,7 @@
                 let singleList = '<tr>';
                 let itemData = items[i];
                 for (key in itemData) {
-                    if (key === 'id' || key === 'arrival' || key === 'burst' || key === 'quantum' || key === 'pariority' || key === 'name') {
+                    if (key === 'id' || key === 'arrival' || key === 'burstA' || key === 'quantum' || key === 'pariority' || key === 'name') {
                         singleList += `<td>${itemData[key]}</td>`
                     }
                 }
@@ -441,6 +420,7 @@
                 name: inputName.value,
                 arrival: inputArrival.value,
                 burst: inputBurst.value,
+                burstA: inputBurst.value,
                 pariority: inputPariority.value,
                 quantum: inputQuantum.value
             };
