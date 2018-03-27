@@ -170,7 +170,7 @@
                 printItems();
                 printGanttChart();
             } else if (select.value === 'SJFP') {
-                SJFPreemptive();
+                schedulePreemptive('burst');
                 printItems();
                 printGanttChart();
             } else if (select.value === 'SJFNP') {
@@ -187,7 +187,7 @@
                 printItems();
                 printGanttChart();
             } else if (select.value === 'PP') {
-
+                schedulePreemptive('pariority');
             }
 
 
@@ -219,7 +219,7 @@
         }
 
 
-        function SJFPreemptive() {
+        function schedulePreemptive(prop) {
             let pcom = 0, count = 0;
             let itemLength = items.length;
             let sjfArray = JSON.parse(JSON.stringify(items));
@@ -232,7 +232,7 @@
                         break;
                     }
                 }
-                sjfArray = bubbleSort(sjfArray, i, 'burst');
+                sjfArray = bubbleSort(sjfArray, i, prop);
                 if (i > 0) {
                     for (i = 0; i < itemLength; i++) {
                         if (Number(sjfArray[i]['burst']) != 0) {
@@ -270,6 +270,7 @@
 
             console.log(sjfArray);
         }
+
 
 
         function drawSJFPreemptive(arr) {
