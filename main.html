@@ -350,6 +350,9 @@
             let robinRoundArray = JSON.parse(JSON.stringify(items)); // Deep Copying Of Array Of Objects
             let done = true;
             let tracker = false;
+            let currentTime = 0;
+            let totalWaitingTime = 0;
+            let totalTurnAroundTime = 0;
             while (1) {
                 done = true;
                 for (let i = 0; i < robinRoundArray.length; i++) {
@@ -358,6 +361,7 @@
                         if (robinRoundArray[i]['burst'] > quantum) {
                             robinRoundArray[i]['burst'] = Number(robinRoundArray[i]['burst']) - quantum;
                             allBurstTime += quantum;
+                            currentTime += quantum;
                             let widthNumber = quantum * 5;
                             step += `<td style="width:${widthNumber}px" class="text-center">${robinRoundArray[i]['name']}</td>`;
                             if (i === 0 && tracker === false) { // First Cell
@@ -375,6 +379,10 @@
                             }
                         } else {
                             allBurstTime += Number(robinRoundArray[i]['burst']);
+                            currentTime += robinRoundArray[i]['burst'];
+                            robinRoundArray[i]['waiting'] = currentTime - Number(robinRoundArray[i]['burstA']);
+                            robinRoundArray[i]['turn'] = robinRoundArray[i]['waiting'] + Number(robinRoundArray[i]['burstA']);
+
                             let widthNumber = Number(robinRoundArray[i]['burst']) * 5;
                             robinRoundArray[i]['burst'] = 0;
                             step += `<td style="width:${widthNumber}px" class="text-center">${robinRoundArray[i]['name']}</td>`;
@@ -399,8 +407,18 @@
                 }
 
             }
+            for(let i = 0; i < robinRoundArray.length;i++) {
+                totalWaitingTime += robinRoundArray[i]['waiting'];
+                totalTurnAroundTime += robinRoundArray[i]['turn'];
+            }
+
+            if(robinRoundArray.length !== 0) {
+                printTiming(totalWaitingTime / robinRoundArray.length, totalTurnAroundTime / robinRoundArray.length);
+            }
             gantt.innerHTML = step;
             gantt_scale.innerHTML = stepNumbers;
+
+
         }
 
         function printNewItem() {
