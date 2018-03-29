@@ -99,7 +99,7 @@
         var items = []; // Memory of the Application
         var counter = 0; // Counter
         initSelectMethod();
-
+        var trackSchdule = true;
         // Get Select Box
         var select = document.getElementById('method');
         select.addEventListener('change', function (e) {
@@ -171,15 +171,15 @@
                 printGanttChart();
             } else if (select.value === 'SJFP') {
                 schedulePreemptive('burst');
-                printItems();
-                printGanttChart();
+                // printItems();
+                // printGanttChart();
             } else if (select.value === 'SJFNP') {
                 // TODO: More Test Cases
                 items.sort(sortArrayBy('burst'));
                 printItems();
                 printGanttChart();
             } else if (select.value === 'RR') {
-                // Robin Round Algorithm
+                // Round Robin Algorithm
                 drawRobinRound(Number(quant));
 
             } else if (select.value === 'PNP') {
@@ -220,6 +220,16 @@
 
 
         function schedulePreemptive(prop) {
+            var gantt = document.getElementById('gantt');
+            var gantt_scale = document.getElementById('gantt__scale');
+            gantt.innerHTML = '';
+            gantt_scale.innerHTML = '';
+            let isFirst = false;
+            let step = '';
+            let stepNumbers = '';
+            let stackTracker = [];
+            let tracker = false;
+            let allBurstTime = 0;
             let pcom = 0, count = 0;
             let itemLength = items.length;
             let sjfArray = JSON.parse(JSON.stringify(items));
@@ -234,6 +244,7 @@
                 }
                 sjfArray = bubbleSort(sjfArray, i, prop);
                 if (i > 0) {
+
                     for (i = 0; i < itemLength; i++) {
                         if (Number(sjfArray[i]['burst']) != 0) {
                             break;
@@ -242,8 +253,37 @@
                     if (Number(sjfArray[i]['arrival']) > count) {
                         count = Number(sjfArray[i]['arrival']);
                     }
+                    let stackIndex = stackTracker.indexOf(sjfArray[i]['name']);
+
                     sjfArray[i]['complete'] = count + 1;
                     sjfArray[i]['burst'] = Number(sjfArray[i]['burst']) - 1;
+                    if (stackIndex === -1 && isFirst === true) {
+                        console.log('INSIDE!');
+                        let popedElement = stackTracker.splice(0, 1);
+                        console.log(popedElement);
+                        stackTracker.push(sjfArray[i]['name']);
+                        let popedElementObject = sjfArray.find(obj => obj.name === popedElement[0]);
+                        console.log(popedElementObject);
+                        let widthNumber = popedElementObject['complete'] * 2;
+                        step += `<td style="width:${widthNumber}px" class="text-center">${popedElementObject['name']}</td>`;
+                        if (tracker === false) { // First Cell
+                            tracker = true;
+                            stepNumbers += `<td style="width:${widthNumber}px">
+                                    <span class="pull-left">0</span>
+                                    <span class="pull-right">${popedElementObject['complete']}</span>
+                                    </td>
+                                    `;
+                        } else { // Other Cells
+                            stepNumbers += `<td style="width:${widthNumber}px">
+                                        <span class="pull-right">${popedElementObject['complete']}</span>
+                                        </td>
+                                        `;
+                        }
+                    } else if (stackIndex === -1 && isFirst === false) {
+                        isFirst = true;
+                        console.log('INSDIE 2');
+                        stackTracker.push(sjfArray[i]['name']);
+                    }
                 }
                 count++;
                 pcom = 0;
@@ -252,23 +292,45 @@
                         pcom++;
                     }
                 }
-
-
             }
+
+
             for (let j = 0; j < itemLength; j++) {
                 sjfArray[j]['turn'] = Number(sjfArray[j]['complete']) - Number(sjfArray[j]['arrival']);
                 turnArroundTime += sjfArray[j]['turn'];
                 sjfArray[j]['waiting'] = Number(sjfArray[j]['turn']) - Number(sjfArray[j]['burstA']);
                 waitingTime += Number(sjfArray[j]['waiting']);
             }
+            if (stackTracker.length !== 0) {
+                let popedElement = stackTracker.splice(0, 1);
+                let popedElementObject = sjfArray.find(obj => obj.name === popedElement[0]);
+                let widthNumber = popedElementObject['complete'] * 2;
+                console.log(popedElementObject['complete'] - Number(popedElementObject['burstA']) + popedElementObject['waiting']);
+                console.log(popedElementObject);
+                if (sjfArray.length === 1) {
+                    step += `<td style="width:${widthNumber}px" class="text-center">${popedElementObject['name']}</td>`;
+                    stepNumbers += `<td style="width:${widthNumber}px">
+                                    <span class="pull-left">${popedElementObject['complete'] - Number(popedElementObject['burstA']) + popedElementObject['waiting']}</span>
+                                    <span class="pull-right">${popedElementObject['complete']}</span>
+                                    </td>
+                                    `;
 
+                } else {
+                    step += `<td style="width:${widthNumber}px" class="text-center">${popedElementObject['name']}</td>`;
+                    stepNumbers += `<td style="width:${widthNumber}px">
+                                    <span class="pull-right">${popedElementObject['complete']}</span>
+                                    </td>
+                                    `;
+                }
+            }
             if (itemLength !== 0) {
                 turnArroundTime = turnArroundTime / itemLength;
                 waitingTime = waitingTime / itemLength;
                 printTiming(waitingTime, turnArroundTime);
             }
+            gantt.innerHTML = step;
+            gantt_scale.innerHTML = stepNumbers;
 
-            console.log(sjfArray);
         }
 
 
