@@ -407,12 +407,12 @@
                 }
 
             }
-            for(let i = 0; i < robinRoundArray.length;i++) {
+            for (let i = 0; i < robinRoundArray.length; i++) {
                 totalWaitingTime += robinRoundArray[i]['waiting'];
                 totalTurnAroundTime += robinRoundArray[i]['turn'];
             }
 
-            if(robinRoundArray.length !== 0) {
+            if (robinRoundArray.length !== 0) {
                 printTiming(totalWaitingTime / robinRoundArray.length, totalTurnAroundTime / robinRoundArray.length);
             }
             gantt.innerHTML = step;
@@ -460,6 +460,8 @@
             let step = '';
             let stepNumbers = '';
             let allBurstTime = 0;
+            let totalWaitingTime = 0;
+            let totalTurnAroundTime = 0;
             items.forEach((item, i) => {
                 allBurstTime += Number(item['burst']);
                 let widthNumber = Number(item['burst']) * 5;
@@ -477,6 +479,29 @@
                     `;
                 }
             });
+
+
+            if (items.length > 0) {
+                items[0]['waiting'] = 0;
+                totalWaitingTime += items[0]['waiting'];
+                for (let i = 1; i < items.length; i++) {
+                    items[i]['waiting'] = Number(items[i - 1]['burstA']) + Number(items[i - 1]['waiting']);
+                    console.log(items[i]['waiting']);
+                    totalWaitingTime += items[i]['waiting'];
+                }
+
+
+                for (let item of items) {
+                    item['turn'] = Number(item['burstA']) + item['waiting'];
+                    console.log(item['turn']);
+                    totalTurnAroundTime += item['turn'];
+                }
+
+                printTiming(totalWaitingTime / items.length, totalTurnAroundTime / items.length);
+
+            }
+
+
             gantt.innerHTML = step;
             gantt_scale.innerHTML = stepNumbers;
 
