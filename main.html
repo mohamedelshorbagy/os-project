@@ -171,10 +171,9 @@
                 printGanttChart();
             } else if (select.value === 'SJFP') {
                 schedulePreemptive('burst');
-                // printItems();
-                // printGanttChart();
             } else if (select.value === 'SJFNP') {
                 // TODO: More Test Cases
+                // TODO: Still Need To know a lot about it
                 items.sort(sortArrayBy('burst'));
                 printItems();
                 printGanttChart();
@@ -183,6 +182,7 @@
                 drawRobinRound(Number(quant));
 
             } else if (select.value === 'PNP') {
+                // TODO: Need to be sure there's an algorithm for pariority is non-preemptive
                 items.sort(sortArrayBy('pariority'));
                 printItems();
                 printGanttChart();
@@ -258,12 +258,9 @@
                     sjfArray[i]['complete'] = count + 1;
                     sjfArray[i]['burst'] = Number(sjfArray[i]['burst']) - 1;
                     if (stackIndex === -1 && isFirst === true) {
-                        console.log('INSIDE!');
                         let popedElement = stackTracker.splice(0, 1);
-                        console.log(popedElement);
                         stackTracker.push(sjfArray[i]['name']);
                         let popedElementObject = sjfArray.find(obj => obj.name === popedElement[0]);
-                        console.log(popedElementObject);
                         let widthNumber = popedElementObject['complete'] * 2;
                         step += `<td style="width:${widthNumber}px" class="text-center">${popedElementObject['name']}</td>`;
                         if (tracker === false) { // First Cell
@@ -281,7 +278,6 @@
                         }
                     } else if (stackIndex === -1 && isFirst === false) {
                         isFirst = true;
-                        console.log('INSDIE 2');
                         stackTracker.push(sjfArray[i]['name']);
                     }
                 }
@@ -305,8 +301,6 @@
                 let popedElement = stackTracker.splice(0, 1);
                 let popedElementObject = sjfArray.find(obj => obj.name === popedElement[0]);
                 let widthNumber = popedElementObject['complete'] * 2;
-                console.log(popedElementObject['complete'] - Number(popedElementObject['burstA']) + popedElementObject['waiting']);
-                console.log(popedElementObject);
                 if (sjfArray.length === 1) {
                     step += `<td style="width:${widthNumber}px" class="text-center">${popedElementObject['name']}</td>`;
                     stepNumbers += `<td style="width:${widthNumber}px">
@@ -486,14 +480,12 @@
                 totalWaitingTime += items[0]['waiting'];
                 for (let i = 1; i < items.length; i++) {
                     items[i]['waiting'] = Number(items[i - 1]['burstA']) + Number(items[i - 1]['waiting']);
-                    console.log(items[i]['waiting']);
                     totalWaitingTime += items[i]['waiting'];
                 }
 
 
                 for (let item of items) {
                     item['turn'] = Number(item['burstA']) + item['waiting'];
-                    console.log(item['turn']);
                     totalTurnAroundTime += item['turn'];
                 }
 
