@@ -176,6 +176,13 @@
             flyEl.innerHTML = '';
             allWaitingTimeForSJFNP = 0;
             allTurnTimeForSJFNP = 0;
+            counter = 0;
+            countFly = 0; // Arrival Time
+            flyEvent = false;
+            marioOnTheFlySound.pause();
+            marioOnTheFlySound.currentTime = 0;
+            marioSound.currentTime = 0;
+            marioSound.play();
             var inputArrival = document.getElementById("item-arrival");
             inputArrival.style.display = 'block';
         }
@@ -183,9 +190,7 @@
             items = [];
             clearTables();
             clearInterval(flyInterval);
-            counter = 0;
-            countFly = 0; // Arrival Time
-            flyEvent = false;
+
         }
 
 
@@ -273,15 +278,15 @@
                 allBusrtTimeForSJFNP += arr[0]['burst'];
                 let width = arr[0]['burst'] * 5;
                 if (trackMe === 1) {
-                    arr[0]['turn'] = allBusrtTimeForSJFNP - arr[0]['arrival'];
+                    arr[0]['turn'] = Math.abs(allBusrtTimeForSJFNP - arr[0]['arrival']);
                     allTurnTimeForSJFNP += arr[0]['turn'];
-                    allWaitingTimeForSJFNP += arr[0]['turn'] - arr[0]['burst'];
+                    allWaitingTimeForSJFNP += Math.abs(arr[0]['turn'] - arr[0]['burst']);
                     step += `<td class="text-center" style="width: ${width}px">${arr[0]['name']}</td>`;
                     stepNumbers += `<td style="width: ${width}px">
                         <span class="pull-right">${allBusrtTimeForSJFNP}</span>
                 </td>`;
                 } else {
-                    arr[0]['turn'] = allBusrtTimeForSJFNP - arr[0]['arrival'];
+                    arr[0]['turn'] = Math.abs(allBusrtTimeForSJFNP - arr[0]['arrival']);
                     allTurnTimeForSJFNP += arr[0]['turn'];
                     step += `<td class="text-center" style="width: ${width}px">${arr[0]['name']}</td>`;
                     stepNumbers += `<td style="width: ${width}px">
@@ -319,7 +324,7 @@
                 step += `<td style="width:${widthNumber}px" class="text-center">${firstElement['name']}</td>`;
                 if (SJFNPBOOL === false) {
                     SJFNPBOOL = true;
-                    firstElement['turn'] = allBusrtTimeForSJFNP - firstElement['arrival'];
+                    firstElement['turn'] = Math.abs(allBusrtTimeForSJFNP - firstElement['arrival']);
                     allTurnTimeForSJFNP += firstElement['turn'];
                     stepNumbers += `<td style="width: ${widthNumber}px">
             <span class="pull-left">${firstElement['arrival']}</span>
@@ -328,9 +333,9 @@
             `;
 
                 } else {
-                    firstElement['turn'] = allBusrtTimeForSJFNP - firstElement['arrival'];
+                    firstElement['turn'] = Math.abs(allBusrtTimeForSJFNP - firstElement['arrival']);
                     allTurnTimeForSJFNP += firstElement['turn'];
-                    allWaitingTimeForSJFNP += firstElement['turn'] - firstElement['burst'];
+                    allWaitingTimeForSJFNP += Math.abs(firstElement['turn'] - firstElement['burst']);
                     stepNumbers += `<td style="width: ${widthNumber}px">
             <span class="pull-right">${allBusrtTimeForSJFNP}</span>
                 </td>
@@ -344,9 +349,9 @@
                 stepNumbers = '';
                 tempArr.forEach(item => {
                     allBusrtTimeForSJFNP += item['burst'];
-                    item['turn'] = allBusrtTimeForSJFNP - item['arrival'];
+                    item['turn'] = Math.abs(allBusrtTimeForSJFNP - item['arrival']);
                     allTurnTimeForSJFNP += item['turn'];
-                    allWaitingTimeForSJFNP += item['turn'] - item['burst'];
+                    allWaitingTimeForSJFNP += Math.abs(item['turn'] - item['burst']);
                     let width = item['burst'] * 5;
                     step += `<td style="width: ${width}px" class="text-center">${item['name']}</td>`;
                     stepNumbers += `<td style="width: ${width}px">
@@ -462,9 +467,9 @@
 
 
             for (let j = 0; j < itemLength; j++) {
-                sjfArray[j]['turn'] = Number(sjfArray[j]['complete']) - Number(sjfArray[j]['arrival']);
+                sjfArray[j]['turn'] = Math.abs(Number(sjfArray[j]['complete']) - Number(sjfArray[j]['arrival']));
                 turnArroundTime += sjfArray[j]['turn'];
-                sjfArray[j]['waiting'] = Number(sjfArray[j]['turn']) - Number(sjfArray[j]['burstA']);
+                sjfArray[j]['waiting'] = Math.abs(Number(sjfArray[j]['turn']) - Number(sjfArray[j]['burstA']));
                 waitingTime += Number(sjfArray[j]['waiting']);
             }
             if (stackTracker.length !== 0) {
@@ -539,8 +544,8 @@
                         } else {
                             allBurstTime += Number(robinRoundArray[i]['burst']);
                             currentTime += robinRoundArray[i]['burst'];
-                            robinRoundArray[i]['waiting'] = currentTime - Number(robinRoundArray[i]['burstA']);
-                            robinRoundArray[i]['turn'] = robinRoundArray[i]['waiting'] + Number(robinRoundArray[i]['burstA']);
+                            robinRoundArray[i]['waiting'] = Math.abs(currentTime - Number(robinRoundArray[i]['burstA']));
+                            robinRoundArray[i]['turn'] = Math.abs(robinRoundArray[i]['waiting'] + Number(robinRoundArray[i]['burstA']));
 
                             let widthNumber = Number(robinRoundArray[i]['burst']) * 5;
                             robinRoundArray[i]['burst'] = 0;
@@ -626,7 +631,7 @@
                 let widthNumber = Number(item['burst']) * 5;
                 step += `<td style="width:${widthNumber}px" class="text-center">${item['name']}</td>`;
                 if (i === 0) { // First Cell
-                    item['turn'] = allBurstTime - item['arrival'];
+                    item['turn'] = Math.abs(allBurstTime - item['arrival']);
                     totalTurnAroundTime += item['turn'];
                     stepNumbers += `<td style="width:${widthNumber}px">
                     <span class="pull-left">0</span>
@@ -634,9 +639,9 @@
                     </td>
                     `;
                 } else { // Other Cells
-                    item['turn'] = allBurstTime - item['arrival'];
+                    item['turn'] = Math.abs(allBurstTime - item['arrival']);
                     totalTurnAroundTime += item['turn'];
-                    totalWaitingTime += item['turn'] - item['burst'];
+                    totalWaitingTime += Math.abs(item['turn'] - item['burst']);
                     stepNumbers += `<td style="width:${widthNumber}px">
                     <span class="pull-right">${allBurstTime}</span>
                     </td>
