@@ -105,6 +105,10 @@
         initSelectMethod();
         var trackSchdule = true;
         var flyInterval;
+        var allBusrtTimeForSJFNP = 0;
+        var SJFNPBOOL = false;
+        var allWaitingTimeForSJFNP = 0;
+        var allTurnTimeForSJFNP = 0;
         // Get Select Box
         var select = document.getElementById('method');
         select.addEventListener('change', function (e) {
@@ -123,6 +127,8 @@
         }
 
         function clearTables() {
+            allBusrtTimeForSJFNP = 0;
+            SJFNPBOOL = false
             let list = document.getElementById('items');
             let ganttChart = document.getElementById('gantt');
             let ganttScale = document.getElementById('gantt__scale');
@@ -147,6 +153,8 @@
             taElement.innerHTML = '';
             wtElement.innerHTML = '';
             flyEl.innerHTML = '';
+            allWaitingTimeForSJFNP = 0;
+            allTurnTimeForSJFNP = 0;
         }
         function clearMemory() {
             items = [];
@@ -201,7 +209,14 @@
                 // items.sort(sortArrayBy('burst'));
                 // printItems();
                 // printGanttChart();
-                drawSJFNP(items);
+                SJFNPBOOL = false
+                allWaitingTimeForSJFNP = 0;
+                allTurnTimeForSJFNP = 0;
+                drawSJFNP(items, 0);
+                if (items.length > 0) {
+                    console.log(allTurnTimeForSJFNP , items.length);
+                    printTiming(allWaitingTimeForSJFNP / items.length, allTurnTimeForSJFNP / items.length)
+                }
             } else if (select.value === 'RR') {
                 // Round Robin Algorithm
                 drawRobinRound(Number(quant));
@@ -217,12 +232,10 @@
 
 
         }
-        var allBusrtTimeForSJFNP = 0;
-        var SJFNPBOOL = false
 
-        function drawSJFNP(arr1) {
+
+        function drawSJFNP(arr1, trackMe) {
             let arr = JSON.parse(JSON.stringify(arr1));
-            console.log(allBusrtTimeForSJFNP);
             if (arr.length === 1) {
                 var gantt = document.getElementById('gantt');
                 var gantt_scale = document.getElementById('gantt__scale');
@@ -231,10 +244,26 @@
 
                 allBusrtTimeForSJFNP += arr[0]['burst'];
                 let width = arr[0]['burst'] * 5;
-                step += `<td class="text-center" style="width: ${width}px">${arr[0]['name']}</td>`;
-                stepNumbers += `<td style="width: ${width}px">
+                console.log(trackMe);
+                if (trackMe === 1) {
+                    arr[0]['turn'] = allBusrtTimeForSJFNP - arr[0]['arrival'];
+                    allTurnTimeForSJFNP += arr[0]['turn'];
+                    allWaitingTimeForSJFNP += arr[0]['turn'] - arr[0]['burst'];
+                    step += `<td class="text-center" style="width: ${width}px">${arr[0]['name']}</td>`;
+                    stepNumbers += `<td style="width: ${width}px">
                         <span class="pull-right">${allBusrtTimeForSJFNP}</span>
                 </td>`;
+                } else {
+                    arr[0]['turn'] = allBusrtTimeForSJFNP - arr[0]['arrival'];
+                    allTurnTimeForSJFNP += arr[0]['turn'];
+                    step += `<td class="text-center" style="width: ${width}px">${arr[0]['name']}</td>`;
+                    stepNumbers += `<td style="width: ${width}px">
+            <span class="pull-left">${arr[0]['arrival']}</span>
+            <span class="pull-right">${allBusrtTimeForSJFNP}</span>
+                </td>
+            `;
+                }
+
                 gantt.innerHTML += step;
                 gantt_scale.innerHTML += stepNumbers;
                 return;
@@ -243,17 +272,13 @@
             } else {
                 const firstElement = arr[0];
                 arr.splice(0, 1);
-                console.log(firstElement);
-                console.log(arr);
                 let tempArr = [];
                 for (let i = arr.length - 1; i >= 0; i--) {
                     if (arr[i]['arrival'] < firstElement['burst']) {
-                        console.log(arr[i]);
                         tempArr.push(arr[i]);
                         arr.splice(i, 1);
                     }
                 }
-                console.log(tempArr);
                 var gantt = document.getElementById('gantt');
                 var gantt_scale = document.getElementById('gantt__scale');
 
@@ -266,8 +291,9 @@
                 allBusrtTimeForSJFNP += firstElement['burst'];
                 step += `<td style="width:${widthNumber}px" class="text-center">${firstElement['name']}</td>`;
                 if (SJFNPBOOL === false) {
-                    console.log('INSIDE');
                     SJFNPBOOL = true;
+                    firstElement['turn'] = allBusrtTimeForSJFNP - firstElement['arrival'];
+                    allTurnTimeForSJFNP += firstElement['turn'];
                     stepNumbers += `<td style="width: ${widthNumber}px">
             <span class="pull-left">${firstElement['arrival']}</span>
             <span class="pull-right">${allBusrtTimeForSJFNP}</span>
@@ -275,6 +301,9 @@
             `;
 
                 } else {
+                    firstElement['turn'] = allBusrtTimeForSJFNP - firstElement['arrival'];
+                    allTurnTimeForSJFNP += firstElement['turn'];
+                    allWaitingTimeForSJFNP += firstElement['turn'] - firstElement['burst'];
                     stepNumbers += `<td style="width: ${widthNumber}px">
             <span class="pull-right">${allBusrtTimeForSJFNP}</span>
                 </td>
@@ -288,6 +317,9 @@
                 stepNumbers = '';
                 tempArr.forEach(item => {
                     allBusrtTimeForSJFNP += item['burst'];
+                    item['turn'] = allBusrtTimeForSJFNP - item['arrival'];
+                    allTurnTimeForSJFNP += item['turn'];
+                    allWaitingTimeForSJFNP += item['turn'] - item['burst'];
                     let width = item['burst'] * 5;
                     step += `<td style="width: ${width}px" class="text-center">${item['name']}</td>`;
                     stepNumbers += `<td style="width: ${width}px">
@@ -298,7 +330,7 @@
 
                 gantt.innerHTML += step;
                 gantt_scale.innerHTML += stepNumbers;
-                return drawSJFNP(arr);
+                return drawSJFNP(arr, 1);
 
             }
 
