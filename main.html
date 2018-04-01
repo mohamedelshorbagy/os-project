@@ -48,8 +48,12 @@
                     <button class="btn btn-success btn-block" type="submit">Add Item</button>
                 </form>
                 <button class="btn btn-danger" onclick="clearMemory()">Clear</button>
-
+                <button class="btn btn-info" onclick="onTheFly()">On the Fly</button>
                 <!-- Print Turn Arround Time and Average Time -->
+                <div class="row" id="fly">
+                    <div class="col-xs-2">
+                    </div>
+                </div>
                 <div class="row print">
                     <div class="col-xs-6">
                         Turn Arround Time :
@@ -100,6 +104,7 @@
         var counter = 0; // Counter
         initSelectMethod();
         var trackSchdule = true;
+        var flyInterval;
         // Get Select Box
         var select = document.getElementById('method');
         select.addEventListener('change', function (e) {
@@ -127,6 +132,9 @@
             var inputBurst = document.getElementById("item-burst");
             var inputPariority = document.getElementById("item-par");
             var inputQuantum = document.getElementById("item-quantum");
+            let taElement = document.getElementById('ta');
+            let wtElement = document.getElementById('wt');
+            let flyEl = document.getElementById('fly');
             inputId.value = '';
             inputName.value = '';
             inputArrival.value = '';
@@ -136,10 +144,14 @@
             list.innerHTML = '';
             ganttChart.innerHTML = '';
             ganttScale.innerHTML = '';
+            taElement.innerHTML = '';
+            wtElement.innerHTML = '';
+            flyEl.innerHTML = '';
         }
         function clearMemory() {
             items = [];
             clearTables();
+            clearInterval(flyInterval);
             counter = 0;
         }
 
@@ -163,6 +175,18 @@
         }
 
 
+        function onTheFly(isCleared) {
+            let countFly = 0; // Arrival Time
+            let flyEl = document.getElementById('fly');
+            flyEl.innerHTML = `<div class="col-xs-2">Arrival Time : <strong>${countFly}</strong></div>`;
+            flyInterval = setInterval(() => {
+                countFly++;
+                flyEl.innerHTML = `<div class="col-xs-2">Arrival Time : <strong>${countFly}</strong></div>`;
+            }, 1000);
+
+        }
+
+
         function draw() {
             let quant = document.getElementById('item-quantum').value;
             if (select.value === 'FCFS') {
@@ -174,9 +198,10 @@
             } else if (select.value === 'SJFNP') {
                 // TODO: More Test Cases
                 // TODO: Still Need To know a lot about it
-                items.sort(sortArrayBy('burst'));
-                printItems();
-                printGanttChart();
+                // items.sort(sortArrayBy('burst'));
+                // printItems();
+                // printGanttChart();
+                drawSJFNP(items);
             } else if (select.value === 'RR') {
                 // Round Robin Algorithm
                 drawRobinRound(Number(quant));
@@ -190,6 +215,92 @@
                 schedulePreemptive('pariority');
             }
 
+
+        }
+        var allBusrtTimeForSJFNP = 0;
+        var SJFNPBOOL = false
+
+        function drawSJFNP(arr1) {
+            let arr = JSON.parse(JSON.stringify(arr1));
+            console.log(allBusrtTimeForSJFNP);
+            if (arr.length === 1) {
+                var gantt = document.getElementById('gantt');
+                var gantt_scale = document.getElementById('gantt__scale');
+                let step = '';
+                let stepNumbers = '';
+
+                allBusrtTimeForSJFNP += arr[0]['burst'];
+                let width = arr[0]['burst'] * 5;
+                step += `<td class="text-center" style="width: ${width}px">${arr[0]['name']}</td>`;
+                stepNumbers += `<td style="width: ${width}px">
+                        <span class="pull-right">${allBusrtTimeForSJFNP}</span>
+                </td>`;
+                gantt.innerHTML += step;
+                gantt_scale.innerHTML += stepNumbers;
+                return;
+            } else if (arr.length === 0) {
+                return;
+            } else {
+                const firstElement = arr[0];
+                arr.splice(0, 1);
+                console.log(firstElement);
+                console.log(arr);
+                let tempArr = [];
+                for (let i = arr.length - 1; i >= 0; i--) {
+                    if (arr[i]['arrival'] < firstElement['burst']) {
+                        console.log(arr[i]);
+                        tempArr.push(arr[i]);
+                        arr.splice(i, 1);
+                    }
+                }
+                console.log(tempArr);
+                var gantt = document.getElementById('gantt');
+                var gantt_scale = document.getElementById('gantt__scale');
+
+                gantt.innerHTML = '';
+                gantt_scale.innerHTML = '';
+                allBusrtTimeForSJFNP = 0;
+                let step = '';
+                let stepNumbers = '';
+                let widthNumber = firstElement['burst'] * 5;
+                allBusrtTimeForSJFNP += firstElement['burst'];
+                step += `<td style="width:${widthNumber}px" class="text-center">${firstElement['name']}</td>`;
+                if (SJFNPBOOL === false) {
+                    console.log('INSIDE');
+                    SJFNPBOOL = true;
+                    stepNumbers += `<td style="width: ${widthNumber}px">
+            <span class="pull-left">${firstElement['arrival']}</span>
+            <span class="pull-right">${allBusrtTimeForSJFNP}</span>
+                </td>
+            `;
+
+                } else {
+                    stepNumbers += `<td style="width: ${widthNumber}px">
+            <span class="pull-right">${allBusrtTimeForSJFNP}</span>
+                </td>
+            `;
+
+                }
+                gantt.innerHTML += step;
+                gantt_scale.innerHTML += stepNumbers;
+                tempArr.sort(sortArrayBy('burst'));
+                step = '';
+                stepNumbers = '';
+                tempArr.forEach(item => {
+                    allBusrtTimeForSJFNP += item['burst'];
+                    let width = item['burst'] * 5;
+                    step += `<td style="width: ${width}px" class="text-center">${item['name']}</td>`;
+                    stepNumbers += `<td style="width: ${width}px">
+            <span class="pull-right">${allBusrtTimeForSJFNP}</span>
+                </td>
+            `;
+                });
+
+                gantt.innerHTML += step;
+                gantt_scale.innerHTML += stepNumbers;
+                return drawSJFNP(arr);
+
+            }
 
         }
 
@@ -327,11 +438,6 @@
 
         }
 
-
-
-        function drawSJFPreemptive(arr) {
-
-        }
 
         function drawRobinRound(quantum) {
             var gantt = document.getElementById('gantt');
@@ -516,11 +622,11 @@
             var itemData = {
                 id: inputId.value,
                 name: inputName.value,
-                arrival: inputArrival.value,
-                burst: inputBurst.value,
-                burstA: inputBurst.value,
-                pariority: inputPariority.value,
-                quantum: inputQuantum.value
+                arrival: Number(inputArrival.value),
+                burst: Number(inputBurst.value),
+                burstA: Number(inputBurst.value),
+                pariority: Number(inputPariority.value),
+                quantum: Number(inputQuantum.value)
             };
 
             counter++;
