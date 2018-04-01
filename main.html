@@ -103,6 +103,8 @@
 
         var items = []; // Memory of the Application
         var counter = 0; // Counter
+        var countFly = 0; // Arrival Time
+        var flyEvent = false;
         initSelectMethod();
         var trackSchdule = true;
         var flyInterval;
@@ -117,7 +119,7 @@
         });
 
         draw();
-        var marioSound = new Audio('whole-game.mp3'); // Untill Program is Closed
+        var marioSound = new Audio('whole-game-2.mp3'); // Untill Program is Closed
         var marioAddItemSound = new Audio('mario-coin-2.mp3'); // Add Item
         var marioOnTheFlySound = new Audio('on-fly.mp3');
         marioSound.loop = true;
@@ -129,7 +131,12 @@
         }
         function pauseAudio() {
             marioOnTheFlySound.pause();
-            marioSound.play();            
+            marioOnTheFlySound.currentTime = 0;
+            marioSound.currentTime = 0;
+            marioSound.play();
+            var inputArrival = document.getElementById("item-arrival");
+            inputArrival.style.display = 'block';
+            clearMemory();
         }
 
         function printTiming(wt, ta) {
@@ -170,12 +177,16 @@
             flyEl.innerHTML = '';
             allWaitingTimeForSJFNP = 0;
             allTurnTimeForSJFNP = 0;
+            var inputArrival = document.getElementById("item-arrival");
+            inputArrival.style.display = 'block';
         }
         function clearMemory() {
             items = [];
             clearTables();
             clearInterval(flyInterval);
             counter = 0;
+            countFly = 0; // Arrival Time
+            flyEvent = false;
         }
 
 
@@ -200,7 +211,10 @@
 
         function onTheFly(isCleared) {
             audioPlay();
-            let countFly = 0; // Arrival Time
+            flyEvent = true;
+            var inputArrival = document.getElementById("item-arrival");
+            inputArrival.style.display = 'none';
+            // let countFly = 0; // Arrival Time
             let flyEl = document.getElementById('fly');
             flyEl.innerHTML = `<div class="col-xs-2">Arrival Time : <strong>${countFly}</strong></div>`;
             flyInterval = setInterval(() => {
@@ -664,13 +678,20 @@
             var inputId = document.getElementById("item-id");
             var inputName = document.getElementById("item-name");
             var inputArrival = document.getElementById("item-arrival");
+            var arrivalTime;
+            if (flyEvent === true) {
+                arrivalTime = countFly;
+            } else {
+                inputArrival = document.getElementById("item-arrival");
+                arrivalTime = Number(inputArrival.value)
+            }
             var inputBurst = document.getElementById("item-burst");
             var inputPariority = document.getElementById("item-par");
             var inputQuantum = document.getElementById("item-quantum");
             var itemData = {
                 id: inputId.value,
                 name: inputName.value,
-                arrival: Number(inputArrival.value),
+                arrival: arrivalTime,
                 burst: Number(inputBurst.value),
                 burstA: Number(inputBurst.value),
                 pariority: Number(inputPariority.value),
@@ -678,11 +699,20 @@
             };
 
             counter++;
+            console.log(itemData);
             items.push(itemData);
-            marioSound.pause();            
-            marioAddItemSound.play();
-            marioSound.play();
-            
+            if (flyEvent === true) {
+                marioOnTheFlySound.pause();
+                marioAddItemSound.play();
+                marioOnTheFlySound.play();
+
+            } else {
+                marioSound.pause();
+                marioAddItemSound.play();
+                marioSound.play();
+
+            }
+
             printNewItem();
         }
 
