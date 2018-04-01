@@ -627,12 +627,17 @@
                 let widthNumber = Number(item['burst']) * 5;
                 step += `<td style="width:${widthNumber}px" class="text-center">${item['name']}</td>`;
                 if (i === 0) { // First Cell
+                    item['turn'] = allBurstTime - item['arrival'];
+                    totalTurnAroundTime += item['turn'];
                     stepNumbers += `<td style="width:${widthNumber}px">
                     <span class="pull-left">0</span>
                     <span class="pull-right">${Number(item['burst'])}</span>
                     </td>
                     `;
                 } else { // Other Cells
+                    item['turn'] = allBurstTime - item['arrival'];
+                    totalTurnAroundTime += item['turn'];
+                    totalWaitingTime += item['turn'] - item['burst'];
                     stepNumbers += `<td style="width:${widthNumber}px">
                     <span class="pull-right">${allBurstTime}</span>
                     </td>
@@ -640,21 +645,7 @@
                 }
             });
 
-
             if (items.length > 0) {
-                items[0]['waiting'] = 0;
-                totalWaitingTime += items[0]['waiting'];
-                for (let i = 1; i < items.length; i++) {
-                    items[i]['waiting'] = Number(items[i - 1]['burstA']) + Number(items[i - 1]['waiting']);
-                    totalWaitingTime += items[i]['waiting'];
-                }
-
-
-                for (let item of items) {
-                    item['turn'] = Number(item['burstA']) + item['waiting'];
-                    totalTurnAroundTime += item['turn'];
-                }
-
                 printTiming(totalWaitingTime / items.length, totalTurnAroundTime / items.length);
 
             }
@@ -681,7 +672,7 @@
                 if (items.length === 0) {
                     arrivalTime = 0;
                 } else {
-                    arrivalTime = countFly;                    
+                    arrivalTime = countFly;
                 }
             } else {
                 inputArrival = document.getElementById("item-arrival");
