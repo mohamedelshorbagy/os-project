@@ -142,9 +142,8 @@
         function printTiming(wt, ta) {
             let taElement = document.getElementById('ta');
             let wtElement = document.getElementById('wt');
-
-            taElement.innerHTML = `<strong>${ta}</strong>`;
-            wtElement.innerHTML = `<strong>${wt}</strong>`;
+            taElement.innerHTML = `<strong>${ta.toFixed(3)}</strong>`;
+            wtElement.innerHTML = `<strong>${wt.toFixed(3)}</strong>`;
 
         }
 
