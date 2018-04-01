@@ -49,6 +49,7 @@
                 </form>
                 <button class="btn btn-danger" onclick="clearMemory()">Clear</button>
                 <button class="btn btn-info" onclick="onTheFly()">On the Fly</button>
+                <button class="btn btn-warning" onclick="pauseAudio()">Stop</button>
                 <!-- Print Turn Arround Time and Average Time -->
                 <div class="row" id="fly">
                     <div class="col-xs-2">
@@ -84,10 +85,10 @@
 
         <!-- Print Gantt Chart -->
         <div class="responsive">
-            <tbody>
-                <table class="table table-hover table-bordered">
+            <table class="table table-hover table-bordered">
+                <tbody>
                     <tr id="gantt"></tr>
-            </tbody>
+                </tbody>
             </table>
             <table class="table table-hover" id="gantt__table">
                 <tbody>
@@ -116,6 +117,20 @@
         });
 
         draw();
+        var marioSound = new Audio('whole-game.mp3'); // Untill Program is Closed
+        var marioAddItemSound = new Audio('mario-coin-2.mp3'); // Add Item
+        var marioOnTheFlySound = new Audio('on-fly.mp3');
+        marioSound.loop = true;
+        marioSound.play();
+        function audioPlay() {
+            marioSound.pause();
+            marioOnTheFlySound.loop = true;
+            marioOnTheFlySound.play();
+        }
+        function pauseAudio() {
+            marioOnTheFlySound.pause();
+            marioSound.play();            
+        }
 
         function printTiming(wt, ta) {
             let taElement = document.getElementById('ta');
@@ -184,6 +199,7 @@
 
 
         function onTheFly(isCleared) {
+            audioPlay();
             let countFly = 0; // Arrival Time
             let flyEl = document.getElementById('fly');
             flyEl.innerHTML = `<div class="col-xs-2">Arrival Time : <strong>${countFly}</strong></div>`;
@@ -214,7 +230,7 @@
                 allTurnTimeForSJFNP = 0;
                 drawSJFNP(items, 0);
                 if (items.length > 0) {
-                    console.log(allTurnTimeForSJFNP , items.length);
+                    console.log(allTurnTimeForSJFNP, items.length);
                     printTiming(allWaitingTimeForSJFNP / items.length, allTurnTimeForSJFNP / items.length)
                 }
             } else if (select.value === 'RR') {
@@ -663,6 +679,10 @@
 
             counter++;
             items.push(itemData);
+            marioSound.pause();            
+            marioAddItemSound.play();
+            marioSound.play();
+            
             printNewItem();
         }
 
